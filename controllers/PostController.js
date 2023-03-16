@@ -16,37 +16,88 @@ export const getAll = async (req, res) => {
 export const getOne = async (req, res) => {
   try {
     const postId = req.params.id
-    //const posts = await PostModel.find().populate('user').exec()
-    PostModel.findOneAndUpdate({
-      _id: postId,
-    }, {
-      $inc: { viewsCount: 1 },
-    }, {
-      returnDocument: 'after',
-    },
-    (err, doc) => {
-      if (err) {
-        console.log(err)
-        return res.status(500).json({
-          message: 'Не вдалося повернути статтю!'
-        })
-      } 
-      
+
+    await PostModel.findOneAndUpdate(
+      { _id: postId }, 
+      { $inc: { viewsCount: 1 }},
+      { returnDocument: 'after' })
+    .then(doc => { 
       if (!doc) {
         return res.status(404).json({
           message: 'Стаття не знайдена!'
         })
       }
-
       res.json(doc)
-    },
-  ).populate('user')
-
-   //res.json(posts)
+    })
+    .catch((err) => {
+      if (err) {
+        console.log(err)
+        return res.status(500).json({
+          message: 'Не вдалося повернути статтю!'
+        })
+      }
+    })
   } catch (err) {
       console.log(err)
       res.status(500).json({
         message: 'Не вдалося отримати статті!'
+      })
+    }
+}
+
+export const remove = async (req, res) => {
+  try {
+    const postId = req.params.id
+
+    await PostModel.findOneAndDelete(
+      { _id: postId }
+    )
+    .then(doc => { 
+      if (!doc) {
+        return res.status(404).json({
+          message: 'Стаття не знайдена!'
+        })
+      }
+      res.json({
+        success: true
+      })
+    })
+    .catch((err) => {
+      if (err) {
+        console.log(err)
+        return res.status(500).json({
+          message: 'Не вдалося видалити статтю!'
+        })
+      }
+    })
+  } catch (err) {
+      console.log(err)
+      res.status(500).json({
+        message: 'Не вдалося отримати статті!'
+      })
+    }
+}
+
+export const update = async (req, res) => {
+  try {
+    const postId = req.params.id
+
+    await PostModel.updateOne(
+      { _id: postId },
+      { title: req.body.title,
+        text: req.body.text,
+        imageUrl: req.body.imageUrl,
+        tags: req.body.tags,
+        user: req.userId, }
+    )
+
+    res.json({
+      success: true
+    })
+  } catch (err) {
+      console.log(err)
+      res.status(500).json({
+        message: 'Не вдалося обновити статті!'
       })
     }
 }
